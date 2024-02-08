@@ -44,7 +44,7 @@ export class ThemeService {
     this._theme = theme;
 
     if (theme === ThemeService.SystemTheme) {
-      theme = this._isSystemThemeDark() ? 'kd-dark-theme' : 'kd-light-theme';
+      theme = this._isSystemThemeDark() ? 'kd-dark-theme' : 'kd-dark-theme';
     }
     this._onThemeSwitchEvent.emit(theme);
   }
@@ -58,7 +58,7 @@ export class ThemeService {
   init(): void {
     this._document.defaultView.matchMedia(this._colorSchemeQuery).addEventListener('change', e => {
       if (this.theme === ThemeService.SystemTheme) {
-        this._onThemeSwitchEvent.emit(e.matches ? 'kd-dark-theme' : 'kd-light-theme');
+        this._onThemeSwitchEvent.emit(e.matches ? 'kd-dark-theme' : 'kd-dark-theme');
       }
     });
 

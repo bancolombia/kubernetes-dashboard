@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
-import {Component, Inject, NgZone, OnInit} from '@angular/core';
+import {Component, Inject, NgZone, OnInit, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthenticationMode, EnabledAuthenticationModes, LoginSkippableResponse, LoginSpec} from '@api/root.api';
 import {KdError} from '@api/root.shared';
@@ -23,14 +23,21 @@ import {AuthService} from '@common/services/global/authentication';
 import {HistoryService} from '@common/services/global/history';
 import {PluginsConfigService} from '@common/services/global/plugin';
 import {CookieService} from 'ngx-cookie-service';
-import {map} from 'rxjs/operators';
+import {map, filter,takeUntil   } from 'rxjs/operators';
 import {CONFIG_DI_TOKEN} from '../index.config';
 import {SKIP_LOGIN_PAGE_QUERY_STATE_PARAM} from '@common/params/params';
+import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfiguration } from '@azure/msal-angular';
+import { AuthenticationResult, InteractionStatus, PopupRequest, RedirectRequest, EventMessage, EventType } from '@azure/msal-browser';
+import { Subject } from 'rxjs';
+
+ 
+
 
 enum LoginModes {
   Kubeconfig = 'kubeconfig',
   Basic = 'basic',
   Token = 'token',
+  AzureAD = 'AzureAD'
 }
 
 @Component({
@@ -38,10 +45,14 @@ enum LoginModes {
   templateUrl: './template.html',
   styleUrls: ['./style.scss'],
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   loginModes = LoginModes;
   selectedAuthenticationMode = '';
   errors: KdError[] = [];
+  isIframe = false;
+  loginDisplay = false;
+  private readonly _destroying$ = new Subject<void>();
+
 
   private enabledAuthenticationModes_: AuthenticationMode[] = [];
   private isLoginSkippable_ = false;
@@ -59,10 +70,28 @@ export class LoginComponent implements OnInit {
     private readonly route_: ActivatedRoute,
     private readonly pluginConfigService_: PluginsConfigService,
     private readonly historyService_: HistoryService,
-    @Inject(CONFIG_DI_TOKEN) private readonly CONFIG: IConfig
-  ) {}
+    @Inject(CONFIG_DI_TOKEN) private readonly CONFIG: IConfig,
+    @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
+    private authService: MsalService,
+    private msalBroadcastService: MsalBroadcastService
+  ) {
+   
+  }
+
 
   ngOnInit(): void {
+    this.authService.instance.initialize();
+ 
+    this.isIframe = window !== window.parent && !window.opener; 
+    this.setLoginDisplay();
+
+    this.authService.instance.enableAccountStorageEvents();
+
+    if (this.authService.instance.getAllAccounts().length > 0) {
+      this.authService_.loginAzureAd(this.authService.instance.getActiveAccount().username, this.authService.instance.getActiveAccount().idToken);
+      this.historyService_.goToPreviousState('workloads');
+    }
+   
     this.selectedAuthenticationMode =
       this.selectedAuthenticationMode || this.cookies_.get(this.CONFIG.authModeCookieName) || '';
 
@@ -70,10 +99,9 @@ export class LoginComponent implements OnInit {
       .get<EnabledAuthenticationModes>('api/v1/login/modes')
       .subscribe((enabledModes: EnabledAuthenticationModes) => {
         this.enabledAuthenticationModes_ = enabledModes.modes;
-        this.enabledAuthenticationModes_.push(LoginModes.Kubeconfig);
-        this.selectedAuthenticationMode = this.selectedAuthenticationMode
-          ? (this.selectedAuthenticationMode as LoginModes)
-          : (this.enabledAuthenticationModes_[0] as LoginModes);
+        this.enabledAuthenticationModes_.push(LoginModes.AzureAD);
+        this.enabledAuthenticationModes_.splice(0, 1);
+        
       });
 
     this.http_
@@ -94,8 +122,49 @@ export class LoginComponent implements OnInit {
     });
   }
 
+
+  checkAndSetActiveAccount(){
+  
+    let activeAccount = this.authService.instance.getActiveAccount();
+
+    if (!activeAccount && this.authService.instance.getAllAccounts().length > 0) {
+      let accounts = this.authService.instance.getAllAccounts();
+      this.authService.instance.setActiveAccount(accounts[0]);
+    }
+  }
+
+  setLoginDisplay() {
+    this.loginDisplay = this.authService.instance.getAllAccounts().length > 0;
+  }
+
   getEnabledAuthenticationModes(): AuthenticationMode[] {
     return this.enabledAuthenticationModes_;
+  }
+
+
+   
+  loginRedirect():void {
+    if (this.msalGuardConfig.authRequest){
+      this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as RedirectRequest);
+    } else {
+      this.authService.loginRedirect();
+    }
+  }
+    
+
+  logout(popup?: boolean) {
+    if (popup) {
+      this.authService.logoutPopup({
+        mainWindowRedirectUri: "/login"
+      });
+    } else {
+      this.authService.logoutRedirect();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this._destroying$.next(undefined);
+    this._destroying$.complete();
   }
 
   login(): void {
@@ -111,21 +180,42 @@ export class LoginComponent implements OnInit {
     }
 
     this.saveLastLoginMode_();
-    this.authService_.login(this.getLoginSpec_()).subscribe(
-      (errors: K8SError[]) => {
-        if (errors.length > 0) {
-          this.errors = errors.map((error: K8SError) => new K8SError(error.ErrStatus).toKdError().localize());
-          return;
-        }
 
-        this.pluginConfigService_.refreshConfig();
-        this.ngZone_.run(_ => this.historyService_.goToPreviousState('workloads'));
-      },
-      (err: HttpErrorResponse) => {
-        this.errors = [AsKdError(err)];
-      }
-    );
+    if(this.selectedAuthenticationMode === LoginModes.AzureAD)
+    {
+
+      sessionStorage.removeItem('msal.interaction.status');
+      // this.loginRedirect();
+      this.authService.loginPopup()
+      .subscribe((response: AuthenticationResult) => {
+        this.authService.instance.setActiveAccount(response.account);
+        this.authService_.loginAzureAd(response.account.username, response.account.idToken);
+        this.historyService_.goToPreviousState('workloads');  
+      });
+     
+      // // this.authService_.skipLoginPage(true);
+ 
+    }
+    else
+    {
+      this.authService_.login(this.getLoginSpec_()).subscribe(
+        (errors: K8SError[]) => {
+          if (errors.length > 0) {
+            this.errors = errors.map((error: K8SError) => new K8SError(error.ErrStatus).toKdError().localize());
+            return;
+          }
+
+          this.pluginConfigService_.refreshConfig();
+          this.ngZone_.run(_ => this.historyService_.goToPreviousState('workloads'));
+        },
+        (err: HttpErrorResponse) => {
+          this.errors = [AsKdError(err)];
+        }
+      );
+    }
   }
+
+
 
   skip(): void {
     this.authService_.skipLoginPage(true);
@@ -148,6 +238,9 @@ export class LoginComponent implements OnInit {
       case LoginModes.Token:
         this.token_ = (event.target as HTMLInputElement).value.trim();
         break;
+      case LoginModes.AzureAD:
+          this.token_ = (event.target as HTMLInputElement).value.trim();
+          break;
       case LoginModes.Basic:
         if ((event.target as HTMLInputElement).id === 'username') {
           this.username_ = (event.target as HTMLInputElement).value;
@@ -184,6 +277,8 @@ export class LoginComponent implements OnInit {
       case LoginModes.Kubeconfig:
         return {kubeConfig: this.kubeconfig_} as LoginSpec;
       case LoginModes.Token:
+        return {token: this.token_} as LoginSpec;
+      case LoginModes.AzureAD:
         return {token: this.token_} as LoginSpec;
       case LoginModes.Basic:
         return {

@@ -36,30 +36,36 @@ limitations under the License.
                               i18n>Basic</ng-container>
                 <ng-container *ngSwitchCase="loginModes.Token"
                               i18n>Token</ng-container>
+                <ng-container *ngSwitchCase="loginModes.AzureAD"
+                              >Azure AD</ng-container>
               </ng-container>
             </mat-radio-button>
             <div class="kd-login-mode-description"
                  [ngSwitch]="mode">
               <ng-container *ngSwitchCase="loginModes.Kubeconfig"
-                            i18n>
-                Please select the kubeconfig file that you have created to configure access to the cluster. To find out
+                            >
+                Please select the kubeconfig file Kubeconfig Autenticacion that you have created to configure access to the cluster. To find out
                 more about how to configure and use kubeconfig file, please refer to the
                 <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">Configure Access to Multiple Clusters</a>
                 section.
               </ng-container>
               <ng-container *ngSwitchCase="loginModes.Basic"
-                            i18n>
-                Make sure that support for basic authentication is enabled in the cluster. To find out more about how to
+                            >
+                Make sure that support for basic Basico Autenticacion is enabled in the cluster. To find out more about how to
                 configure basic authentication, please refer to the
                 <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/">Authenticating</a> and
                 <a href="https://kubernetes.io/docs/reference/access-authn-authz/abac/">ABAC Mode</a> sections.
               </ng-container>
               <ng-container *ngSwitchCase="loginModes.Token"
-                            i18n>
-                Every Service Account has a Secret with valid Bearer Token that can be used to log in to Dashboard. To
+                            >
+                Every Service Account has a Secret with valid Token Autenticacion Bearer Token that can be used to log in to Dashboard. To
                 find out more about how to configure and use Bearer Tokens, please refer to the
                 <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/">Authentication</a> section.
               </ng-container>
+              <ng-container *ngSwitchCase="loginModes.AzureAD">
+                  Opcion Para Iniciar Sesion A travez del Directorio Activo De Azure
+              </ng-container>
+             
             </div>
           </div>
         </mat-radio-group>
@@ -144,6 +150,9 @@ limitations under the License.
           </button>
         </div>
       </form>
+      <div>
+       
+      </div>
     </div>
   </kd-card>
 </div>

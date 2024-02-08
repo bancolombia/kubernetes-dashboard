@@ -28,8 +28,13 @@ import {SettingsHelperService} from './global/service';
 import {LocalSettingsComponent} from './local/component';
 import {SettingsRoutingModule} from './routing';
 
+
+const isIE =
+  window.navigator.userAgent.indexOf("MSIE ") > -1 ||
+  window.navigator.userAgent.indexOf("Trident/") > -1;
+
 @NgModule({
-  imports: [SharedModule, ComponentsModule, SettingsRoutingModule],
+  imports: [SharedModule, ComponentsModule, SettingsRoutingModule  ],
   declarations: [
     GlobalSettingsComponent,
     LocalSettingsComponent,
@@ -39,6 +44,7 @@ import {SettingsRoutingModule} from './routing';
     AddFallbackNamespaceDialogComponent,
     EditFallbackNamespaceDialogComponent,
     SaveAnywayDialogComponent,
+    
   ],
   providers: [SettingsHelperService],
 })

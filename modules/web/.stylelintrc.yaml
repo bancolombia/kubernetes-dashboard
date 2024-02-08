@@ -38,3 +38,4 @@ rules:
     - severity: warning
   scss/comment-no-empty:
   selector-pseudo-element-no-unknown:
+  string-quotes: single

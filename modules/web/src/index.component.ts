@@ -22,6 +22,8 @@ import {TitleService} from '@common/services/global/title';
 @Component({selector: 'kd-root', template: '<router-outlet></router-outlet>'})
 export class RootComponent implements OnInit {
   private _theme = this._themeService.theme;
+  isIframe = false;
+  loginDisplay = false;
 
   constructor(
     private readonly _themeService: ThemeService,
@@ -32,12 +34,19 @@ export class RootComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+
+   
+  
+    
+  
+    this.isIframe = window !== window.parent && !window.opener; 
     this._titleService.update();
     this._themeService.subscribe(this.onThemeChange_.bind(this));
 
     const localSettings = this._localSettingService.get();
+    localSettings.theme = "kd-dark-theme";
     if (localSettings && localSettings.theme) {
-      this._theme = localSettings.theme;
+      this._theme =  localSettings.theme;
       this._themeService.theme = localSettings.theme;
     }
 

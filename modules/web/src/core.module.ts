@@ -20,6 +20,7 @@ import {GlobalServicesModule} from '@common/services/global/module';
 import {ResourceModule} from '@common/services/resource/module';
 import {CONFIG, CONFIG_DI_TOKEN} from './index.config';
 import {MESSAGES_DI_TOKEN, MESSAGES} from './index.messages';
+ 
 
 @NgModule({
   providers: [
@@ -37,3 +38,5 @@ export class CoreModule {
     }
   }
 }
+
+

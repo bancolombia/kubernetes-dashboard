@@ -39,6 +39,8 @@ import {PluginsConfigService} from './plugin';
 import {PluginLoaderService} from '../pluginloader/pluginloader.service';
 import {ClientPluginLoaderService} from '../pluginloader/clientloader.service';
 import {PinnerService} from './pinner';
+import { InteractionType } from '@azure/msal-browser';
+import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfiguration } from '@azure/msal-angular';
 
 @NgModule({
   providers: [
@@ -91,6 +93,12 @@ export class GlobalServicesModule {
   constructor(injector: Injector) {
     GlobalServicesModule.injector = injector;
   }
+}
+
+export function MSALGuardConfigFactory(): MsalGuardConfiguration {
+  return { 
+    interactionType: InteractionType.Redirect,
+  };
 }
 
 export function init(

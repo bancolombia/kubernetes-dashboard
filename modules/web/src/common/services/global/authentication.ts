@@ -27,10 +27,13 @@ import {K8SError} from '../../errors/errors';
 
 import {CsrfTokenService} from './csrftoken';
 import {KdStateService} from './state';
+import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfiguration } from '@azure/msal-angular';
+
 
 @Injectable()
 export class AuthService {
   constructor(
+    private authService: MsalService,
     private readonly cookies_: CookieService,
     private readonly router_: Router,
     private readonly http_: HttpClient,
@@ -42,6 +45,7 @@ export class AuthService {
   }
 
   private init_() {
+    this.authService.instance.initialize();
     this.stateService_.onBefore.pipe(switchMap(() => this.getLoginStatus())).subscribe(status => {
       if (this.isAuthenticationEnabled(status)) {
         this.refreshToken();
@@ -89,7 +93,7 @@ export class AuthService {
   /**
    * Sends a login request to the backend with filled in login spec structure.
    */
-  login(loginSpec: LoginSpec): Observable<K8SError[]> {
+    login(loginSpec: LoginSpec): Observable<K8SError[]> {
     return this.csrfTokenService_
       .getTokenForAction('login')
       .pipe(
@@ -111,9 +115,20 @@ export class AuthService {
       );
   }
 
+  loginAzureAd(user: string, token: string): void{
+     this.setTokenCookie_(token);
+     this.setUsernameCookie_(user);
+  }
+
   logout(): void {
     this.removeAuthCookies();
-    this.router_.navigate(['login']);
+
+    this.authService.logoutPopup({
+      account: this.authService.instance.getActiveAccount(),
+    }).subscribe(() => {
+      this.router_.navigate(['login']);
+    });
+   
   }
 
   /**
@@ -124,28 +139,28 @@ export class AuthService {
     const token = this.getTokenCookie_();
     if (token.length === 0) return;
 
-    this.csrfTokenService_
-      .getTokenForAction('token')
-      .pipe(
-        switchMap(csrfToken => {
-          return this.http_.post<AuthResponse>(
-            'api/v1/token/refresh',
-            {jweToken: token},
-            {
-              headers: new HttpHeaders().set(this.config_.csrfHeaderName, csrfToken.token),
-            }
-          );
-        })
-      )
-      .pipe(take(1))
-      .subscribe((authResponse: AuthResponse) => {
-        if (authResponse.jweToken.length !== 0 && authResponse.errors.length === 0) {
-          this.setTokenCookie_(authResponse.jweToken);
-          return authResponse.jweToken;
-        }
+    // this.csrfTokenService_
+    //   .getTokenForAction('token')
+    //   .pipe(
+    //     switchMap(csrfToken => {
+    //       return this.http_.post<AuthResponse>(
+    //         'api/v1/token/refresh',
+    //         {jweToken: token},
+    //         {
+    //           headers: new HttpHeaders().set(this.config_.csrfHeaderName, csrfToken.token),
+    //         }
+    //       );
+    //     })
+    //   )
+    //   .pipe(take(1))
+    //   .subscribe((authResponse: AuthResponse) => {
+    //     if (authResponse.jweToken.length !== 0 && authResponse.errors.length === 0) {
+    //       this.setTokenCookie_(authResponse.jweToken);
+    //       return authResponse.jweToken;
+    //     }
 
-        return authResponse.errors;
-      });
+    //     return authResponse.errors;
+    //   });
   }
 
   /** Checks if user is authenticated. */

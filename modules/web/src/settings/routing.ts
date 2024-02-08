@@ -13,20 +13,33 @@
 // limitations under the License.
 
 import {NgModule} from '@angular/core';
-import {Route, RouterModule} from '@angular/router';
+import {Routes, RouterModule} from '@angular/router';
 import {BREADCRUMBS} from '../index.messages';
 import {SettingsComponent} from './component';
+import { BrowserUtils } from "@azure/msal-browser";
 
-export const SETTINGS_ROUTE: Route = {
-  path: '',
-  component: SettingsComponent,
-  data: {
-    breadcrumb: BREADCRUMBS.Settings,
+// export const SETTINGS_ROUTE: Route = {
+//   path: '',
+//   component: SettingsComponent,
+//   data: {
+//     breadcrumb: BREADCRUMBS.Settings,
+//   },
+// };
+
+const routes: Routes = [
+  {
+    path: "",
+    component: SettingsComponent,
+    data: {
+      breadcrumb: BREADCRUMBS.Settings,
+    },
   },
-};
+];
+const isIframe = window !== window.parent && !window.opener;
 
 @NgModule({
-  imports: [RouterModule.forChild([SETTINGS_ROUTE])],
+  imports:[],
   exports: [RouterModule],
+
 })
 export class SettingsRoutingModule {}
