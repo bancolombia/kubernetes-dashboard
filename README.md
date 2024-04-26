@@ -4,7 +4,7 @@
 [![Coverage Status](https://codecov.io/github/kubernetes/dashboard/coverage.svg?branch=master)](https://codecov.io/github/kubernetes/dashboard?branch=master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/kubernetes/dashboard/blob/master/LICENSE)
 
-## Introduction
+## Introduction p
 
 Kubernetes Dashboard is a general purpose, web-based UI for Kubernetes clusters. It allows users to manage applications running in the cluster and troubleshoot them, as well as manage the cluster itself.
 
@@ -16,7 +16,7 @@ can be considered an app version now.
 
 ![Dashboard UI workloads page](docs/images/overview.png)
 
-## Installation
+## Installation to eks
 
 Kubernetes Dashboard supports only Helm-based installation currently as it is faster and gives us better control
 over all dependencies required by Dashboard to run. We now use a single-container, DBless [Kong](https://hub.docker.com/r/kong/kong-gateway) installation
