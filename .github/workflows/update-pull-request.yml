@@ -1,0 +1,31 @@
+name: Actualización del repo oficial sobre la customización
+on:
+  pull_request:
+    types:
+      - opened
+    branches: 
+      - 'release/**'
+      - 'action/**'
+env:
+  kube_dash_url: https://github.com/kubernetes/dashboard
+jobs:
+  actualizar-sobre-ultimo-repo:
+    name: update
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Clonar última versión del repo oficial
+        uses: actions/checkout@v4
+      - name: Agregar remoto del repo oficial
+        run: git remote add kube-dash ${{ env.kube_dash_url }}
+      - name: Obtener cambios del repo oficial
+        run: git fetch kube-dash release/7.3.2
+      - name: Configurar identidad de usuario de Git
+        run: |
+          git config --global user.email "${{ github.event.pull_request.user.email }}"
+          git config --global user.name "${{ github.event.pull_request.user.login }}"
+      - name: Actualizar rama local desde el repositorio oficial
+        run: |
+            git fetch kube-dash release/7.3.2
+            git checkout -B release/7.3.2 kube-dash/release/7.3.2
+      - name: Empujar cambios a la rama
+        run: git push origin HEAD
