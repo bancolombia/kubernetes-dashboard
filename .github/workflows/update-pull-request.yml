@@ -1,6 +1,8 @@
 name: Actualización del repo oficial sobre la customización
 on:
   pull_request:
+    types:
+      - opened
     branches: 
       - 'release/*'
 env:
