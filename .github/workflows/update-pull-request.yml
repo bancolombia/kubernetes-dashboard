@@ -7,7 +7,7 @@ on:
       - 'release/**'
       - 'action/**'
 env:
-  kube-dash: https://github.com/kubernetes/dashboard
+  kube_dash_url: https://github.com/kubernetes/dashboard
 
 jobs:
   actualizar-sobre-ultimo-repo:
