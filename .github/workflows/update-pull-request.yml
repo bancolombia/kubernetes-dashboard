@@ -8,7 +8,6 @@ on:
       - 'action/**'
 env:
   kube_dash_url: https://github.com/kubernetes/dashboard
-
 jobs:
   actualizar-sobre-ultimo-repo:
     name: update
@@ -21,9 +20,8 @@ jobs:
       - name: Obtener cambios del repo oficial
         run: git fetch kube-dash "refs/pull/${{ github.event.pull_request.number }}/head"
       - name: Actualizar rama local
-        run: git merge kube-dash/${GITHUB_REF}
+        run: git merge kube-dash/"refs/pull/${{ github.event.pull_request.number }}/head"
       - name: Empujar cambios a la rama
-        run: git push origin ${GITHUB_REF}
-    
+        run: git push origin "refs/pull/${{ github.event.pull_request.number }}/head"
           
   
