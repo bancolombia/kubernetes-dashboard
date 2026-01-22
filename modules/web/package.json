@@ -121,7 +121,7 @@
     "js-beautify": "1.14.11",
     "license-check-and-add": "4.0.5",
     "lint-staged": "15.2.1",
-    "lodash-es": "4.17.21",
+    "lodash-es": "4.17.23",
     "minimatch": "9.0.3",
     "minimist": "1.2.8",
     "ng-extract-i18n-merge": "2.9.1",
